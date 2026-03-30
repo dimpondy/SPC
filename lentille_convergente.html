@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lentille Convergente – Animation & QCM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f5f5f3;
+    --surface2: #ededea;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --green: #0f6e56;
+    --green-lt: rgba(15,110,86,0.07);
+    --blue: #1565c0;
+    --red: #b71c1c;
+    --olive: #2e7d5a;
+    --text: #1a1a18;
+    --text2: #555550;
+    --text3: #999990;
+    --radius: 12px;
+  }
+
+  body { background:#fff; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.6; min-height:100vh; }
+
+  header { padding:28px 40px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; }
+  .flame { font-size:26px; animation:fl 1.8s ease-in-out infinite alternate; }
+  @keyframes fl { from{transform:rotate(-4deg) scale(1)} to{transform:rotate(4deg) scale(1.08)} }
+  h1 { font-size:21px; font-weight:500; }
+  h1 span { color:var(--green); }
+  .sub { font-size:12px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:2px; }
+
+  .layout { max-width:940px; margin:0 auto; padding:24px 20px 48px; }
+
+  /* simulation */
+  .sim-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:24px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  .controls { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:18px; }
+  @media(max-width:600px){ .controls{grid-template-columns:1fr;} }
+  .ctrl-group label { display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.8px; color:var(--text3); margin-bottom:5px; font-family:'DM Mono',monospace; }
+  .ctrl-group .vr { display:flex; align-items:center; gap:8px; }
+  .ctrl-group input[type=range] { flex:1; -webkit-appearance:none; height:3px; border-radius:2px; background:#ddd; outline:none; }
+  .ctrl-group input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--green); cursor:pointer; border:2px solid #fff; box-shadow:0 0 4px rgba(15,110,86,0.4); }
+  .ctrl-group .vv { font-family:'DM Mono',monospace; font-size:13px; font-weight:500; color:var(--green); min-width:38px; text-align:right; }
+  canvas#sim { width:100%; display:block; border-radius:8px; border:1px solid var(--border); background:#fafaf8; }
+  .info-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .badge { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px; flex:1; min-width:120px; }
+  .badge .bl { font-size:10px; text-transform:uppercase; letter-spacing:.7px; color:var(--text3); font-family:'DM Mono',monospace; }
+  .badge .bv { font-size:17px; font-weight:500; color:var(--text); margin-top:1px; }
+
+  /* qcm */
+  .qcm-title { font-size:17px; font-weight:500; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  .qcm-title::before { content:''; display:inline-block; width:4px; height:20px; background:var(--green); border-radius:2px; }
+  .q-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; transition:border-color .3s; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .q-card.correct { border-color:var(--olive); }
+  .q-card.wrong   { border-color:var(--red); }
+  .q-num { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; }
+  .q-txt { font-size:15px; font-weight:500; margin-bottom:13px; line-height:1.5; }
+  .opts { display:flex; flex-direction:column; gap:7px; }
+  .opt { display:flex; align-items:center; gap:10px; padding:9px 13px; border-radius:8px; border:1px solid var(--border); cursor:pointer; transition:all .2s; font-size:14px; color:var(--text2); background:var(--surface); user-select:none; }
+  .opt:hover { border-color:var(--border2); color:var(--text); background:#ececea; }
+  .opt.sel  { border-color:var(--green); color:var(--green); background:var(--green-lt); }
+  .opt.ok   { border-color:var(--olive); color:var(--olive); background:rgba(46,125,90,.07); }
+  .opt.bad  { border-color:var(--red);   color:var(--red);   background:rgba(183,28,28,.06); }
+  .radio { width:14px; height:14px; border-radius:50%; border:1.5px solid currentColor; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .radio::after { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; display:none; }
+  .opt.sel .radio::after { display:block; }
+  .fb { font-size:13px; margin-top:9px; padding:8px 12px; border-radius:6px; display:none; line-height:1.5; }
+  .fb.show { display:block; }
+  .fb.ok { background:rgba(46,125,90,.08); color:var(--olive); border:1px solid rgba(46,125,90,.2); }
+  .fb.ko { background:rgba(183,28,28,.07); color:var(--red);   border:1px solid rgba(183,28,28,.18); }
+  .qcm-foot { display:flex; align-items:center; justify-content:space-between; margin-top:22px; flex-wrap:wrap; gap:12px; }
+  .btn { padding:10px 22px; border-radius:8px; border:1px solid var(--border2); background:transparent; color:var(--green); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all .2s; }
+  .btn:hover { background:var(--green-lt); border-color:var(--green); }
+  .btn.p { background:var(--green); color:#fff; border-color:var(--green); }
+  .btn.p:hover { background:#0a5540; }
+  .score { font-family:'DM Mono',monospace; font-size:14px; color:var(--text2); display:none; }
+  .score.show { display:block; }
+  .score strong { color:var(--green); }
+  .prog-bar { height:3px; background:var(--border); border-radius:2px; margin-bottom:20px; overflow:hidden; }
+  .prog-fill { height:100%; background:var(--green); border-radius:2px; width:0%; transition:width .4s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flame">🕯️</div>
+  <div>
+    <h1>Lentille <span>Convergente</span></h1>
+    <div class="sub">Animation interactive · QCM · Optique géométrique</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="sim-card">
+    <div class="controls">
+      <div class="ctrl-group">
+        <label>Focale f (cm)</label>
+        <div class="vr"><input type="range" id="sl-f" min="30" max="150" value="80" step="5"><span class="vv" id="vf">80</span></div>
+      </div>
+      <div class="ctrl-group">
+        <label>Distance objet (cm)</label>
+        <div class="vr"><input type="range" id="sl-d" min="20" max="300" value="160" step="5"><span class="vv" id="vd">160</span></div>
+      </div>
+      <div class="ctrl-group">
+        <label>Taille objet (cm)</label>
+        <div class="vr"><input type="range" id="sl-h" min="10" max="80" value="40" step="5"><span class="vv" id="vh">40</span></div>
+      </div>
+    </div>
+    <canvas id="sim"></canvas>
+    <div class="info-row">
+      <div class="badge"><div class="bl">Distance image</div><div class="bv" id="iv-di">—</div></div>
+      <div class="badge"><div class="bl">Grandissement γ</div><div class="bv" id="iv-g">—</div></div>
+      <div class="badge"><div class="bl">Nature de l'image</div><div class="bv" id="iv-nat">—</div></div>
+    </div>
+  </div>
+
+  <div class="qcm-title">QCM – 5 questions</div>
+  <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+  <div id="qcm"></div>
+  <div class="qcm-foot">
+    <div class="score" id="score"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn" id="btn-check">Vérifier les réponses</button>
+      <button class="btn p" id="btn-reset">Recommencer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── SIMULATION ─────────────────────────────── */
+const cv = document.getElementById('sim');
+const cx = cv.getContext('2d');
+const slF=document.getElementById('sl-f'), slD=document.getElementById('sl-d'), slH=document.getElementById('sl-h');
+let flick=0;
+
+function img(f,d){ const o=-d,inv=1/f+1/o; if(Math.abs(inv)<1e-9)return null; const p=1/inv; return{p,g:p/o}; }
+
+function bougie(x,by,h,col,flip,al){
+  cx.save(); cx.globalAlpha=al??1;
+  const w=h*.22,mH=h*.08,fH=h*.28;
+  if(flip){cx.translate(x,by);cx.scale(1,-1);cx.translate(-x,-by);}
+  const top=by-h;
+  cx.fillStyle=col;
+  cx.beginPath();cx.roundRect(x-w/2,top+fH+mH,w,h-fH-mH,3);cx.fill();
+  cx.beginPath();cx.ellipse(x+w/2-2,top+fH+mH+h*.12,3,6,.3,0,Math.PI*2);cx.fill();
+  cx.strokeStyle='#5a3a1a';cx.lineWidth=1.5;
+  cx.beginPath();cx.moveTo(x,top+fH+mH);cx.lineTo(x+1,top+fH);cx.stroke();
+  const fo=Math.sin(flick)*1.5,fY=top+fH*.1;
+  const halo=cx.createRadialGradient(x+fo*.3,fY+fH*.4,1,x,fY+fH*.5,fH*.85);
+  halo.addColorStop(0,'rgba(255,200,60,.28)');halo.addColorStop(1,'rgba(255,120,0,0)');
+  cx.beginPath();cx.ellipse(x+fo*.3,fY+fH*.4,fH*.85,fH*.85,0,0,Math.PI*2);cx.fillStyle=halo;cx.fill();
+  cx.beginPath();
+  cx.moveTo(x+fo,top);
+  cx.bezierCurveTo(x+w*.6+fo*.5,fY+fH*.3,x+w*.5,fY+fH*.8,x,top+fH);
+  cx.bezierCurveTo(x-w*.5,fY+fH*.8,x-w*.6+fo*.5,fY+fH*.3,x+fo,top);
+  const gr=cx.createLinearGradient(x,top,x,top+fH);
+  gr.addColorStop(0,'#FCDE5A');gr.addColorStop(.4,'#EF9F27');gr.addColorStop(1,'#D85A30');
+  cx.fillStyle=gr;cx.fill();
+  cx.beginPath();
+  cx.moveTo(x+fo*.5,top+fH*.35);
+  cx.bezierCurveTo(x+w*.18,top+fH*.55,x+w*.15,top+fH*.85,x,top+fH*.95);
+  cx.bezierCurveTo(x-w*.15,top+fH*.85,x-w*.18,top+fH*.55,x+fo*.5,top+fH*.35);
+  cx.fillStyle='rgba(160,210,255,.5)';cx.fill();
+  cx.restore();
+}
+
+// Symbole correct d'une lentille CONVERGENTE :
+// trait vertical + flèche pointant vers l'EXTÉRIEUR en haut et en bas
+function lentille(lx,cy,halfH,col){
+  cx.save();
+  cx.strokeStyle=col; cx.fillStyle=col;
+  cx.lineWidth=2.5; cx.lineCap='round'; cx.lineJoin='round';
+
+  // Trait vertical
+  cx.beginPath(); cx.moveTo(lx,cy-halfH); cx.lineTo(lx,cy+halfH); cx.stroke();
+
+  // Pointe du haut : dirigée vers le HAUT (extérieur)
+  const aw=9, ah=14;
+  cx.beginPath();
+  cx.moveTo(lx-aw, cy-halfH+ah);
+  cx.lineTo(lx,    cy-halfH);
+  cx.lineTo(lx+aw, cy-halfH+ah);
+  cx.stroke();
+
+  // Pointe du bas : dirigée vers le BAS (extérieur)
+  cx.beginPath();
+  cx.moveTo(lx-aw, cy+halfH-ah);
+  cx.lineTo(lx,    cy+halfH);
+  cx.lineTo(lx+aw, cy+halfH-ah);
+  cx.stroke();
+
+  cx.restore();
+}
+
+function draw(){
+  const f=+slF.value,d=+slD.value,h=+slH.value;
+  document.getElementById('vf').textContent=f;
+  document.getElementById('vd').textContent=d;
+  document.getElementById('vh').textContent=h;
+  const res=img(f,d);
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.width/dpr,H=cv.height/dpr;
+  cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.restore();
+
+  const LX=W*.46,CY=H*.62,ML=40,MR=30;
+  const sca=Math.min((LX-ML)/(d+30),(W-LX-MR)/(res?Math.max(Math.abs(res.p)+30,f+10):f+10),3.5);
+  const tx=v=>LX+v*sca;
+  const OX=tx(-d),F1=tx(-f),F2=tx(f);
+
+  // fond
+  cx.fillStyle='#fafaf8';cx.fillRect(0,0,W,H);
+
+  // grille
+  const c=sca; cx.strokeStyle='rgba(0,0,0,0.07)';cx.lineWidth=.5;
+  for(let x=LX%c;x<W;x+=c){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+  for(let y=CY%c;y<H;y+=c){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+  for(let y=CY%c-c;y>0;y-=c){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+
+  // axe optique
+  cx.strokeStyle='rgba(0,0,0,0.18)';cx.lineWidth=1;cx.setLineDash([6,4]);
+  cx.beginPath();cx.moveTo(ML,CY);cx.lineTo(W-MR,CY);cx.stroke();cx.setLineDash([]);
+
+  // foyers
+  [[F1,'F'],[F2,"F'"]].forEach(([fx,lb])=>{
+    cx.beginPath();cx.arc(fx,CY,5,0,Math.PI*2);cx.fillStyle='rgba(150,90,0,.75)';cx.fill();
+    cx.fillStyle='#666';cx.font='12px DM Mono,monospace';cx.textAlign='center';cx.fillText(lb,fx,CY+18);
+  });
+
+  // ── LENTILLE CONVERGENTE (symbole correct) ──
+  lentille(LX, CY, Math.min(H*.37,95), '#0f6e56');
+
+  // label focale
+  cx.fillStyle='#999';cx.font='11px DM Mono,monospace';cx.textAlign='center';cx.fillText('f = '+f+' cm',F2,CY-14);
+
+  // objet
+  const oH=h*sca;
+  bougie(OX,CY,oH,'#1565c0',false);
+  cx.strokeStyle='#1565c0';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(OX,CY);cx.lineTo(OX,CY-oH);cx.stroke();
+  cx.fillStyle='#1565c0';cx.font='12px DM Sans,sans-serif';cx.textAlign='center';cx.fillText('Objet',OX,CY-oH-14);
+
+  // rayons + image
+  if(res){
+    const{p,g}=res;
+    const IX=tx(p),iH=Math.abs(g)*oH,is=g<0?-1:1,IT=CY-is*iH,real=p>0;
+    const iC=real?'#b71c1c':'#2e7d5a';
+    const Ax=OX,Ay=CY-oH;
+
+    const ray=(pts,da)=>{
+      cx.beginPath();cx.strokeStyle='#c47a00';cx.lineWidth=1.3;cx.setLineDash(da?[5,4]:[]);
+      pts.forEach(([x,y],i)=>i?cx.lineTo(x,y):cx.moveTo(x,y));
+      cx.stroke();cx.setLineDash([]);
+    };
+
+    // R1 : parallèle → F'
+    {const ry=Ay;ray([[Ax,Ay],[LX,ry]],0);
+     if(real){ray([[LX,ry],[IX,IT]],0);const s=(IT-ry)/(IX-LX);ray([[IX,IT],[W-MR,IT+(W-MR-IX)*s]],0);}
+     else{const s=(IT-ry)/(IX-LX);ray([[LX,ry],[W-MR,ry+(W-MR-LX)*s]],0);ray([[LX,ry],[IX,IT]],1);}}
+
+    // R2 : centre O
+    {const s=(CY-Ay)/(LX-Ax);
+     if(real){ray([[Ax,Ay],[LX,CY],[IX,IT]],0);ray([[IX,IT],[W-MR,IT+(W-MR-IX)*s]],0);}
+     else{ray([[Ax,Ay],[LX,CY]],0);ray([[LX,CY],[W-MR,CY+(W-MR-LX)*s]],0);ray([[LX,CY],[IX,IT]],1);}}
+
+    // R3 : par F → parallèle
+    {const s=(CY-Ay)/(F1-Ax),lY=Ay+(LX-Ax)*s;
+     ray([[Ax,Ay],[LX,lY]],0);
+     if(real){ray([[LX,lY],[IX,lY]],0);ray([[IX,lY],[W-MR,lY]],0);}
+     else{ray([[LX,lY],[W-MR,lY]],0);ray([[LX,lY],[IX,IT]],1);}}
+
+    // image
+    if(Math.abs(iH)>3&&IX>ML&&IX<W-MR){
+      bougie(IX,CY,iH,iC,real,real?1:.55);
+      cx.strokeStyle=iC;cx.lineWidth=1.5;cx.setLineDash(real?[]:[4,3]);
+      cx.beginPath();cx.moveTo(IX,CY);cx.lineTo(IX,IT);cx.stroke();cx.setLineDash([]);
+      cx.fillStyle=iC;cx.font='12px DM Sans,sans-serif';cx.textAlign='center';
+      cx.fillText(real?'Image réelle':'Image virtuelle',IX,real?CY+18:CY-iH-14);
+    }else if(Math.abs(p)>999){
+      cx.fillStyle='#888';cx.font='12px DM Sans,sans-serif';cx.textAlign='center';
+      cx.fillText("Image à l'infini",LX+80,CY-22);
+    }
+
+    cx.fillStyle='rgba(120,80,0,.5)';cx.font='13px DM Mono,monospace';cx.textAlign='left';
+    cx.fillText('γ = '+g.toFixed(2),ML+8,H-10);
+    document.getElementById('iv-di').textContent=p.toFixed(1)+' cm';
+    document.getElementById('iv-g').textContent=g.toFixed(2);
+    document.getElementById('iv-nat').textContent=real?(g<0?'réelle, renversée':'réelle, droite'):'virtuelle, droite';
+  }else{
+    document.getElementById('iv-di').textContent='∞';
+    document.getElementById('iv-g').textContent='—';
+    document.getElementById('iv-nat').textContent="Image à l'infini";
+  }
+}
+
+function resize(){
+  const dpr=window.devicePixelRatio||1,w=cv.parentElement.offsetWidth||900;
+  cv.width=w*dpr;cv.height=Math.round(w*.44)*dpr;cv.style.height=Math.round(w*.44)+'px';cx.scale(dpr,dpr);
+}
+function loop(){flick+=.07;draw();requestAnimationFrame(loop);}
+[slF,slD,slH].forEach(s=>s.addEventListener('input',()=>{}));
+window.addEventListener('resize',()=>{resize();});
+resize();loop();
+
+/* ── QCM qualitatif ─────────────────────────── */
+const QS=[
+  {
+    t:"Quel est le symbole conventionnel d'une lentille convergente en optique géométrique ?",
+    o:["Un trait vertical avec deux flèches pointant vers l'extérieur (en haut et en bas)",
+       "Un trait vertical avec deux flèches pointant vers l'intérieur",
+       "Un cercle avec une croix",
+       "Un rectangle avec des hachures"],
+    c:0,
+    e:"La lentille convergente se représente par un segment vertical muni de deux flèches tournées vers l'extérieur (↑ en haut, ↓ en bas). À l'inverse, la lentille divergente a ses flèches vers l'intérieur."
+  },
+  {
+    t:"Parmi les trois rayons remarquables, lequel passe par le centre optique O sans être dévié ?",
+    o:["Le rayon incident parallèle à l'axe optique",
+       "Le rayon qui passe par le foyer objet F",
+       "Le rayon qui passe par le centre optique O",
+       "Aucun rayon n'est non dévié"],
+    c:2,
+    e:"Tout rayon passant par le centre optique O d'une lentille mince traverse sans être dévié. C'est l'un des trois rayons de construction de base en optique géométrique."
+  },
+  {
+    t:"Quand l'objet est placé entre le foyer objet F et la lentille, l'image est :",
+    o:["Réelle, renversée et plus petite que l'objet",
+       "Virtuelle, droite et agrandie (principe de la loupe)",
+       "Réelle, droite et de même taille",
+       "Il n'y a pas d'image"],
+    c:1,
+    e:"Lorsque la distance objet est inférieure à la focale, les rayons réfractés divergent : l'image est virtuelle (du même côté que l'objet), droite et agrandie. C'est le principe de la loupe !"
+  },
+  {
+    t:"Qu'indique le signe négatif du grandissement γ ?",
+    o:["L'image est plus petite que l'objet",
+       "L'image est du même côté que l'objet",
+       "L'image est renversée par rapport à l'objet",
+       "La lentille est divergente"],
+    c:2,
+    e:"Le signe de γ donne l'orientation de l'image : γ < 0 → image renversée (retournée). La valeur absolue |γ| donne le rapport des tailles : |γ| > 1 signifie agrandie, |γ| < 1 réduite."
+  },
+  {
+    t:"Un rayon lumineux incident parallèle à l'axe optique, après la lentille convergente :",
+    o:["Continue tout droit sans être dévié",
+       "Passe par le foyer objet F",
+       "Passe par le foyer image F'",
+       "Repart vers l'objet"],
+    c:2,
+    e:"C'est l'un des rayons remarquables fondamentaux : tout rayon arrivant parallèlement à l'axe optique repart, après la lentille convergente, en passant par le foyer image F'. C'est cela qui définit F'."
+  }
+];
+
+const cont=document.getElementById('qcm');
+const ans=new Array(QS.length).fill(null);
+
+function build(){
+  cont.innerHTML='';
+  QS.forEach((q,qi)=>{
+    const card=document.createElement('div');
+    card.className='q-card';card.id='q'+qi;
+    card.innerHTML=`<div class="q-num">Question ${qi+1} / ${QS.length}</div>
+      <div class="q-txt">${q.t}</div>
+      <div class="opts">${q.o.map((o,oi)=>`
+        <div class="opt" data-qi="${qi}" data-oi="${oi}"><span class="radio"></span>${o}</div>`).join('')}
+      </div>
+      <div class="fb" id="fb${qi}"></div>`;
+    cont.appendChild(card);
+  });
+  cont.querySelectorAll('.opt').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const qi=+el.dataset.qi,oi=+el.dataset.oi;
+      if(document.getElementById('q'+qi).dataset.locked)return;
+      ans[qi]=oi;
+      cont.querySelectorAll(`.opt[data-qi="${qi}"]`).forEach(o=>o.classList.remove('sel'));
+      el.classList.add('sel');
+      prog();
+    });
+  });
+}
+
+function prog(){
+  document.getElementById('prog').style.width=(ans.filter(a=>a!==null).length/QS.length*100)+'%';
+}
+
+function check(){
+  let score=0;
+  QS.forEach((q,qi)=>{
+    const card=document.getElementById('q'+qi);
+    const ua=ans[qi],fb=document.getElementById('fb'+qi);
+    const opts=card.querySelectorAll('.opt');
+    card.dataset.locked='1';opts.forEach(o=>o.style.pointerEvents='none');
+    if(ua===null){fb.textContent='⚠ Pas de réponse.';fb.className='fb show ko';return;}
+    opts[q.c].classList.add('ok');
+    if(ua===q.c){score++;card.classList.add('correct');fb.textContent='✓ Correct ! '+q.e;fb.className='fb show ok';}
+    else{opts[ua].classList.add('bad');card.classList.add('wrong');fb.textContent='✗ Incorrect. '+q.e;fb.className='fb show ko';}
+  });
+  const s=document.getElementById('score');
+  s.innerHTML='Score : <strong>'+score+' / '+QS.length+'</strong>'+(score===QS.length?' 🎉':'');
+  s.classList.add('show');
+  document.getElementById('prog').style.width='100%';
+}
+
+function reset(){
+  ans.fill(null);
+  document.getElementById('score').classList.remove('show');
+  document.getElementById('prog').style.width='0%';
+  build();
+}
+
+document.getElementById('btn-check').addEventListener('click',check);
+document.getElementById('btn-reset').addEventListener('click',reset);
+build();
+</script>
+</body>
+</html>
